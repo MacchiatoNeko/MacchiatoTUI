@@ -15,10 +15,18 @@
     <PackageTags>console,tui</PackageTags>
     <Description>Unfinished library! MacciatoTUI is a lightweight library for building text-based user interfaces.</Description>
     <NeutralLanguage>en</NeutralLanguage>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/MacchiatoNeko/MacchiatoTUI/</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseFile>README.md</PackageLicenseFile>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="..\..\..\..\Downloads\pkgicon.png">
+    <None Include="..\pkgicon.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\README.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
