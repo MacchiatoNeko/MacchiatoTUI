@@ -5,128 +5,92 @@
     /// </summary>
     public class TuiHandler
     {
-        private int _height;
-        private string[,] _displayMatrix;
-        private string[,] _previousFrame;
+        private int height;
+        private int width;
+        public int FrameRate { get; set; } = 30; // Frame rate for TUI rendering.
+        public bool ShouldTick { get; set; } = true; // Indicates whether TUI rendering should continue.
+
+        private string[] offScreenBuffer; // Buffer to store TUI content.
+        private string[] previousFrame; // Buffer to store the previous frame for comparison.
 
         /// <summary>
-        /// Gets or sets the frame rate at which the TUI updates (in frames per second). Default is 30 FPS.
-        /// </summary>
-        public int FrameRate { get; set; } = 30;
-
-        /// <summary>
-        /// Gets or sets a value indicating whether the TUI should continue updating.
-        /// </summary>
-        public bool ShouldTick { get; set; } = true;
-
-        /// <summary>
-        /// Initializes a new instance of the TuiHandler class with the specified width and height.
-        /// </summary>
-        /// <param name="width">The width of the TUI display.</param>
-        /// <param name="height">The height of the TUI display.</param>
-        public TuiHandler(int width, int height)
-        {
-            _height = height;
-            _displayMatrix = new string[height, width];
-            _previousFrame = new string[height, width];
-        }
-
-        /// <summary>
-        /// Starts the TUI rendering and updating process in a separate thread.
+        /// Starts the TUI rendering process in a separate task.
         /// </summary>
         public void Start()
         {
-            Task.Run(Tick);
+            height = Console.WindowHeight;
+            width = Console.WindowWidth;
+
+            offScreenBuffer = new string[height]; // Initialize off-screen buffer with current window height.
+            previousFrame = new string[height]; // Initialize previous frame buffer with current window height.
+
+            Task.Run(Tick); // Start rendering in a separate task.
         }
 
-        private void Tick()
+        /// <summary>
+        /// Edits a specific line in the off-screen buffer.
+        /// </summary>
+        /// <param name="lineIndex">Index of the line to be edited.</param>
+        /// <param name="newContent">New content for the line.</param>
+        public void EditBufferLine(int lineIndex, string newContent)
+        {
+            if (lineIndex >= 0 && lineIndex < offScreenBuffer.Length)
+            {
+                offScreenBuffer[lineIndex] = newContent; // Update the content of the specified line.
+            }
+            else if (lineIndex >= offScreenBuffer.Length)
+            {
+                Array.Resize(ref offScreenBuffer, lineIndex + 1); // Resize the buffer if the line index is out of bounds.
+                offScreenBuffer[lineIndex] = newContent; // Add the new content to the specified line.
+            }
+        }
+
+        private void Tick() // Main rendering loop.
         {
             while (ShouldTick)
             {
-                UpdateHeight();
-                if (!MatricesEqual(_displayMatrix, _previousFrame))
+                // Check if the window size has changed.
+                if (height != Console.WindowHeight || width != Console.WindowWidth)
                 {
-                    DrawMatrixToScreen(_displayMatrix);
-                    Array.Copy(_displayMatrix, _previousFrame, _displayMatrix.Length);
-                    Console.SetCursorPosition(0, _height);
+                    height = Console.WindowHeight;
+                    width = Console.WindowWidth;
+                    string[] newBuffer = new string[height]; // Resize the buffer to match the new window height.
+                    Array.Copy(offScreenBuffer, newBuffer, Math.Min(offScreenBuffer.Length, height));
+                    offScreenBuffer = newBuffer;
+                    previousFrame = new string[height]; // Reset the previous frame buffer.
                 }
-                Thread.Sleep(1000 / FrameRate);
+
+                // Check if the current frame is different from the previous frame.
+                if (!FramesEqual(offScreenBuffer, previousFrame))
+                {
+                    DrawBufferToScreen(offScreenBuffer); // Draw the buffer content to the console screen.
+                    Array.Copy(offScreenBuffer, previousFrame, offScreenBuffer.Length); // Update the previous frame buffer with the current frame.
+                }
+                Thread.Sleep(1000 / FrameRate); // Pause briefly to control frame rate.
             }
         }
 
-        private void UpdateHeight()
+        private bool FramesEqual(string[] frame1, string[] frame2) // Checks if two frames are equal.
         {
-            if (_height != Console.WindowHeight)
-            {
-                int newHeight = Console.WindowHeight;
-                int width = _displayMatrix.GetLength(1);
-                string[,] newMatrix = new string[newHeight, width];
-
-                for (int i = 0; i < Math.Min(newHeight, _height); i++)
-                {
-                    for (int j = 0; j < width; j++)
-                    {
-                        if (i < _height)
-                        {
-                            newMatrix[i, j] = _displayMatrix[i, j];
-                        }
-                        else
-                        {
-                            newMatrix[i, j] = string.Empty;
-                        }
-                    }
-                }
-                _height = newHeight;
-                _displayMatrix = newMatrix;
-                _previousFrame = new string[_height, width];
-            }
-        }
-
-        private static bool MatricesEqual(string[,] matrix1, string[,] matrix2)
-        {
-            if (matrix1.GetLength(0) != matrix2.GetLength(0) || matrix1.GetLength(1) != matrix2.GetLength(1))
+            if (frame1.Length != frame2.Length)
                 return false;
 
-            for (int i = 0; i < matrix1.GetLength(0); i++)
+            for (int i = 0; i < frame1.Length; i++)
             {
-                for (int j = 0; j < matrix1.GetLength(1); j++)
-                {
-                    if (matrix1[i, j] != matrix2[i, j])
-                        return false;
-                }
+                if (frame1[i] != frame2[i])
+                    return false;
             }
 
             return true;
         }
-        private static void DrawMatrixToScreen(string[,] matrix)
+
+        private void DrawBufferToScreen(string[] buffer) // Draws the buffer content to the console screen.
         {
             Console.SetCursorPosition(0, 0);
-            for (int i = 0; i < matrix.GetLength(0); i++)
-            {
-                for (int j = 0; j < matrix.GetLength(1); j++)
-                {
-                    Console.Write(matrix[i, j]);
-                }
-                Console.WriteLine();
-            }
-        }
 
-        /// <summary>
-        /// Modifies the content of a cell in the display matrix.
-        /// </summary>
-        /// <param name="row">The row index of the cell to edit.</param>
-        /// <param name="col">The column index of the cell to edit.</param>
-        /// <param name="newValue">The new value to set for the cell.</param>
-        /// <exception cref="ArgumentOutOfRangeException">Thrown when the row or column index is out of range.</exception>
-        public void EditMatrixCell(int row, int col, string newValue)
-        {
-            if (row >= 0 && row < _displayMatrix.GetLength(0) && col >= 0 && col < _displayMatrix.GetLength(1))
+            foreach (string line in buffer)
             {
-                _displayMatrix[row, col] = newValue;
-            }
-            else
-            {
-                throw new ArgumentOutOfRangeException("Index out of range.");
+                Console.WriteLine(line);
             }
         }
     }
