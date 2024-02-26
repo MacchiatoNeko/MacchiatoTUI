@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageId>MacchiatoTUI</PackageId>
+    <Title>MacchiatoTUI</Title>
+	<AssemblyVersion>0.0.0001</AssemblyVersion>
+	<FileVersion>$(AssemblyVersion)</FileVersion>
+	<Version>$(AssemblyVersion)</Version>
+    <Authors>MacchiatoNeko</Authors>
+    <PackageIcon>pkgicon.png</PackageIcon>
+    <PackageTags>console,tui</PackageTags>
+    <Description>Unfinished library! MacciatoTUI is a lightweight library for building text-based user interfaces.</Description>
+    <NeutralLanguage>en</NeutralLanguage>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\..\..\Downloads\pkgicon.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+</Project>
